@@ -138,3 +138,35 @@ async def claim_payment(code: str, user_id: str):
             
     finally:
         await conn.close()
+async def save_token(phone_number: str, token_info: dict):
+    """
+    Saves or updates the Google OAuth token for a user.
+    """
+    conn = await get_db_connection()
+    try:
+        # We store the entire JSON blob of token info
+        # But we also extract the access_token for the primary column if needed
+        # Assuming schema has: phone_number, access_token, refresh_token, etc.?
+        # Or just a JSONB column?
+        # Looking at schema.py earlier, it was:
+        # access_token TEXT NOT NULL, refresh_token TEXT, token_uri TEXT, ...
+        
+        await conn.execute("""
+            INSERT INTO ai_tokens (phone_number, access_token, refresh_token, token_uri, client_id, client_secret, scopes, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+            ON CONFLICT (phone_number) DO UPDATE SET
+                access_token = $2,
+                refresh_token = $3,
+                token_uri = $4,
+                created_at = NOW();
+        """, 
+        phone_number, 
+        token_info.get("token"),
+        token_info.get("refresh_token"),
+        token_info.get("token_uri"),
+        token_info.get("client_id"),
+        token_info.get("client_secret"),
+        json.dumps(token_info.get("scopes", []))
+        )
+    finally:
+        await conn.close()

@@ -105,7 +105,54 @@ class RapidProService:
             logger.error(f"RapidPro Start Flow Error: {e}")
             return False
 
-# -- WuzAPI & Legacy Functions (Kept for compatibility) --
+# -- Legacy Management Scripts --
+
+async def provision_channel_programmatically(phone_number: str):
+    try:
+        rpc_path = "/opt/iiab/rapidpro"
+        rpc_python = "/home/iiab-admin/.cache/pypoetry/virtualenvs/temba-cUVkotcG-py3.12/bin/python"
+        script_path = os.path.join(rpc_path, "manage_channels.py")
+        cmd = [rpc_python, script_path, phone_number]
+        
+        process = subprocess.run(
+            cmd, cwd=rpc_path, capture_output=True, text=True, check=False
+        )
+        
+        if process.returncode != 0:
+            logger.error(f"Provision Script Failed: {process.stderr}")
+            return None
+            
+        lines = process.stdout.strip().split('\n')
+        json_str = lines[-1] 
+        return json.loads(json_str)
+
+    except Exception as e:
+        logger.error(f"Provisioning Error: {e}")
+        return None
+
+async def terminate_channel_programmatically(phone_number: str):
+    try:
+        rpc_path = "/opt/iiab/rapidpro"
+        rpc_python = "/home/iiab-admin/.cache/pypoetry/virtualenvs/temba-cUVkotcG-py3.12/bin/python"
+        script_path = os.path.join(rpc_path, "manage_channels.py")
+        cmd = [rpc_python, script_path, phone_number, "--action", "terminate"]
+        
+        process = subprocess.run(
+            cmd, cwd=rpc_path, capture_output=True, text=True, check=False
+        )
+        
+        if process.returncode != 0:
+            return None
+            
+        lines = process.stdout.strip().split('\n')
+        json_str = lines[-1]
+        return json.loads(json_str)
+
+    except Exception as e:
+        logger.error(f"Termination Error: {e}")
+        return None
+
+# -- WuzAPI & Legacy Functions --
 
 async def create_wuzapi_session(user_id: str):
     async with httpx.AsyncClient() as client:
