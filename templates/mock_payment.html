@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MonCash Payment (Simulation)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f2f5;
+            margin: 0;
+        }
+
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .logo {
+            width: 150px;
+            margin-bottom: 1rem;
+        }
+
+        .amount {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #d0021b;
+            margin: 1rem 0;
+        }
+
+        .btn {
+            background-color: #d0021b;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #b00217;
+        }
+
+        .info {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+
+        .badge {
+            background: #e0e0e0;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <img src="https://moncash.com/assets/images/moncash-logo.png" alt="MonCash" class="logo">
+        <div class="badge">SIMULATION MODE</div>
+        <p>Merchant: <strong>KonexPro</strong></p>
+        <div class="amount">{{ amount }} HTG</div>
+        <p class="info">Order ID: {{ order_id }}</p>
+
+        <form action="/v1/moncash/mock/process" method="POST">
+            <input type="hidden" name="orderId" value="{{ order_id }}">
+            <input type="hidden" name="amount" value="{{ amount }}">
+            <button type="submit" class="btn">Confirm Payment</button>
+        </form>
+    </div>
+</body>
+
+</html>
