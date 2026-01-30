@@ -12,7 +12,7 @@ router = APIRouter()
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 # This must match the Authorized Redirect URI in Google Console
-REDIRECT_URI = os.getenv("REDIRECT_URI", "https://konex.pro/auth/callback")
+REDIRECT_URI = os.getenv("REDIRECT_URI", "http://localhost:8001/auth/callback")
 
 # Scopes needed for Gemini/Vertex AI
 SCOPES = [
