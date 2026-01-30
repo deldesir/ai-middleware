@@ -32,29 +32,44 @@ async def process_chat_request(db, phone_number, message, user_urn, groups):
     profile_str = json.dumps(repo_profile, indent=2) if repo_profile else "None"
     
     # Hardcoded "Master Persona" System Prompt (Legacy)
+    # Logic: Usage of RapidPro Groups for conditions/restrictions
+    # Example: "Premium" group gets checking tools, "Banned" gets nothing.
+    group_list = ", ".join(groups) if groups else "None"
+    is_premium = "Premium" in groups or "Beta" in groups
+    
+    # Construct System Prompt
     base_prompt = f"""
     You are Sarah, the AI Specialist at KonexPro.
     Your goal is to help businesses automate their customer service.
     
     ### 👤 USER CONTEXT
     * Status: {"✅ SUBSCRIBER" if is_subscriber else "❌ LEAD"}
+    * Groups: {group_list}
+    * Access Level: {"⭐ PREMIUM" if is_premium else "STANDARD"}
     * Known Profile: {profile_str}
     """
     
-    # 2. Prepare Tools
+    # 2. Prepare Tools (Dynamic Gating)
     # We define the list of available tools.
-    # In the future, this list comes from the Persona definition.
-    tools = [
-        types.Tool(function_declarations=[
-            types.FunctionDeclaration(
-                name="update_profile",
-                description="Save user details to memory.",
-                parameters=types.Schema(
-                    type=types.Type.OBJECT,
-                    properties={"data": types.Schema(type=types.Type.OBJECT)},
-                    required=["data"]
-                )
-            ),
+    # We can restrict tools based on groups here.
+    
+    tool_declarations = [
+        types.FunctionDeclaration(
+            name="update_profile",
+            description="Save user details to memory.",
+            parameters=types.Schema(
+                type=types.Type.OBJECT,
+                properties={"data": types.Schema(type=types.Type.OBJECT)},
+                required=["data"]
+            )
+        )
+    ]
+
+    # Condition: Only show payment link generator to non-subscribers or specific groups?
+    # Or maybe only Premium users can generate links for others?
+    # For now, we allow it for everyone, but note how we *could* restrict it:
+    if True: # or "Sales" in groups:
+        tool_declarations.append(
             types.FunctionDeclaration(
                 name="generate_payment_link",
                 description="create payment link",
@@ -64,7 +79,10 @@ async def process_chat_request(db, phone_number, message, user_urn, groups):
                     required=["plan_type"]
                 )
             )
-        ]),
+        )
+
+    tools = [
+        types.Tool(function_declarations=tool_declarations),
         types.Tool(google_search=types.GoogleSearch())
     ]
     
