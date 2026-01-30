@@ -1,11 +1,10 @@
 import os
-from fastapi import APIRouter, Request, HTTPException, Depends
+from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import RedirectResponse
 from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
-from dotenv import load_dotenv
-
-load_dotenv()
+from app.database.repository import save_token
+from app.core.config import load_config
 
 router = APIRouter()
 
@@ -23,13 +22,19 @@ SCOPES = [
 
 def create_flow():
     if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
-        raise HTTPException(status_code=500, detail="Missing Google Client Config")
+        # Fallback to local vars if not loaded yet? 
+        # But config should be loaded by main.
+        if not os.getenv("GOOGLE_CLIENT_ID"):
+             raise HTTPException(status_code=500, detail="Missing Google Client Config")
+        
+    # Re-fetch from env to be safe
+    client_id = os.getenv("GOOGLE_CLIENT_ID")
+    client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
     
-    # In production, use client_secrets.json or construct from env
     client_config = {
         "web": {
-            "client_id": GOOGLE_CLIENT_ID,
-            "client_secret": GOOGLE_CLIENT_SECRET,
+            "client_id": client_id,
+            "client_secret": client_secret,
             "auth_uri": "https://accounts.google.com/o/oauth2/auth",
             "token_uri": "https://oauth2.googleapis.com/token",
         }
@@ -53,8 +58,6 @@ async def login(request: Request):
             access_type='offline',
             include_granted_scopes='true'
         )
-        # Store state in session to prevent CSRF (simplified for MVP)
-        # request.session['state'] = state 
         return RedirectResponse(authorization_url)
     except Exception as e:
         return {"error": str(e)}
@@ -71,9 +74,6 @@ async def callback(request: Request, code: str):
         
         creds = flow.credentials
         
-        # This is the "Magic" part.
-        # We now have creds.refresh_token & creds.token
-        
         user_info = {
             "token": creds.token,
             "refresh_token": creds.refresh_token,
@@ -83,14 +83,8 @@ async def callback(request: Request, code: str):
             "scopes": creds.scopes
         }
         
-        # Save to DB
-        # For now, we don't have the phone number in the session until WuzAPI integration.
-        # We will assume a 'state' parameter passed during login contained the phone number 
-        # or we create a temporary placeholder.
-        # For MVP: Using a dummy phone number or one extracted from state.
-        
-        from db import save_token
         # TODO: Extract phone from state/session
+        # For MVP, we use a placeholder or derived ID.
         fake_phone = "1234567890" 
         
         await save_token(fake_phone, user_info)
