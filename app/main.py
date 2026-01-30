@@ -26,11 +26,12 @@ async def health_check():
         }
     }
 
-from app.routers import webhooks, moncash, auth
+from app.routers import webhooks, moncash, auth, openai_compat
 # ...
 app.include_router(webhooks.router)
 app.include_router(moncash.router)
 app.include_router(auth.router)
+app.include_router(openai_compat.router)
 
 from fastapi.staticfiles import StaticFiles
 app.mount("/static", StaticFiles(directory="static"), name="static")
